@@ -16,9 +16,14 @@
 package org.gradle.initialization
 
 import org.gradle.groovy.scripts.DefaultScript
+import org.gradle.util.ConfigureUtil
 
 abstract class SettingsScript extends DefaultScript {
     def String toString() {
         return scriptTarget.toString()
+    }
+
+    def void pluginRepositories(Closure config) {
+        ConfigureUtil.configure(config, getPluginRepositoryHandler());
     }
 }

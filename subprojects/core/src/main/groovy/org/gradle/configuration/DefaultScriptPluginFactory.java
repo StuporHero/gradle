@@ -27,6 +27,7 @@ import org.gradle.api.internal.initialization.ClassLoaderScope;
 import org.gradle.api.internal.initialization.ScriptHandlerFactory;
 import org.gradle.api.internal.initialization.ScriptHandlerInternal;
 import org.gradle.api.internal.plugins.PluginManagerInternal;
+import org.gradle.api.internal.plugins.dsl.PluginRepositoryHandler;
 import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.api.tasks.util.PatternSet;
 import org.gradle.api.tasks.util.internal.PatternSets;
@@ -57,6 +58,7 @@ public class DefaultScriptPluginFactory implements ScriptPluginFactory {
     private final ModelRuleSourceDetector modelRuleSourceDetector;
     private final BuildScriptDataSerializer buildScriptDataSerializer = new BuildScriptDataSerializer();
     private final PluginRequestsSerializer pluginRequestsSerializer = new PluginRequestsSerializer();
+    private final PluginRepositoryHandler pluginRepositoryHandler;
 
     public DefaultScriptPluginFactory(ScriptCompilerFactory scriptCompilerFactory,
                                       Factory<LoggingManagerInternal> loggingManagerFactory,
@@ -66,7 +68,8 @@ public class DefaultScriptPluginFactory implements ScriptPluginFactory {
                                       FileLookup fileLookup,
                                       DirectoryFileTreeFactory directoryFileTreeFactory,
                                       DocumentationRegistry documentationRegistry,
-                                      ModelRuleSourceDetector modelRuleSourceDetector) {
+                                      ModelRuleSourceDetector modelRuleSourceDetector,
+                                      PluginRepositoryHandler pluginRepositoryHandler) {
         this.scriptCompilerFactory = scriptCompilerFactory;
         this.loggingManagerFactory = loggingManagerFactory;
         this.instantiator = instantiator;
@@ -76,6 +79,7 @@ public class DefaultScriptPluginFactory implements ScriptPluginFactory {
         this.directoryFileTreeFactory = directoryFileTreeFactory;
         this.documentationRegistry = documentationRegistry;
         this.modelRuleSourceDetector = modelRuleSourceDetector;
+        this.pluginRepositoryHandler = pluginRepositoryHandler;
     }
 
     public ScriptPlugin create(ScriptSource scriptSource, ScriptHandler scriptHandler, ClassLoaderScope targetScope, ClassLoaderScope baseScope, boolean topLevelScript) {
@@ -116,18 +120,21 @@ public class DefaultScriptPluginFactory implements ScriptPluginFactory {
             services.add(FileLookup.class, fileLookup);
             services.add(DirectoryFileTreeFactory.class, directoryFileTreeFactory);
             services.add(ModelRuleSourceDetector.class, modelRuleSourceDetector);
+            services.add(PluginRepositoryHandler.class, pluginRepositoryHandler);
 
             final ScriptTarget scriptTarget = wrap(target);
 
             ScriptCompiler compiler = scriptCompilerFactory.createCompiler(scriptSource);
 
-            // Pass 1, extract plugin requests and execute buildscript {}, ignoring (i.e. not even compiling) anything else
+            // Pass 1, extract plugin requests and plugin repositories and execute buildscript {}, ignoring (i.e. not even compiling) anything else
 
             Class<? extends BasicScript> scriptType = scriptTarget.getScriptClass();
             boolean supportsPluginsBlock = scriptTarget.getSupportsPluginsBlock();
+            boolean supportsPluginRepositoriesBlock = scriptTarget.getSupportsPluginRepositoriesBlock();
             String onPluginBlockError = supportsPluginsBlock ? null : "Only Project build scripts can contain plugins {} blocks";
+            String onPluginRepositoriesBlockError = supportsPluginRepositoriesBlock ? null : "Only Settings and Init scripts can contain a pluginRepositories {} block.";
             String classpathClosureName = scriptTarget.getClasspathBlockName();
-            InitialPassStatementTransformer initialPassStatementTransformer = new InitialPassStatementTransformer(classpathClosureName, onPluginBlockError, scriptSource, documentationRegistry);
+            InitialPassStatementTransformer initialPassStatementTransformer = new InitialPassStatementTransformer(classpathClosureName, onPluginBlockError, onPluginRepositoriesBlockError, scriptSource, documentationRegistry);
             SubsetScriptTransformer initialTransformer = new SubsetScriptTransformer(initialPassStatementTransformer);
             String id = INTERNER.intern("cp_" + scriptTarget.getId());
             CompileOperation<PluginRequests> initialOperation = new FactoryBackedCompileOperation<PluginRequests>(id, initialTransformer, initialPassStatementTransformer, pluginRequestsSerializer);
@@ -139,7 +146,7 @@ public class DefaultScriptPluginFactory implements ScriptPluginFactory {
             PluginManagerInternal pluginManager = scriptTarget.getPluginManager();
             pluginRequestApplicator.applyPlugins(pluginRequests, scriptHandler, pluginManager, targetScope);
 
-            // Pass 2, compile everything except buildscript {} and plugin requests, then run
+            // Pass 2, compile everything except buildscript {}, pluginRepositories{}, and plugin requests, then run
             BuildScriptTransformer buildScriptTransformer = new BuildScriptTransformer(classpathClosureName, scriptSource);
             String operationId = scriptTarget.getId();
             CompileOperation<BuildScriptData> operation = new FactoryBackedCompileOperation<BuildScriptData>(operationId, buildScriptTransformer, buildScriptTransformer, buildScriptDataSerializer);

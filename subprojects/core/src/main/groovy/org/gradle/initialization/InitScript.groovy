@@ -17,6 +17,7 @@ package org.gradle.initialization
 
 import org.gradle.groovy.scripts.DefaultScript
 import org.gradle.api.initialization.dsl.ScriptHandler
+import org.gradle.util.ConfigureUtil
 
 abstract class InitScript extends DefaultScript {
     ScriptHandler getInitscript() {
@@ -26,7 +27,11 @@ abstract class InitScript extends DefaultScript {
     void initscript(Closure configureClosure) {
         buildscript(configureClosure)
     }
-    
+
+    void pluginRepositories(Closure config) {
+        ConfigureUtil.configure(config, getPluginRepositoryHandler());
+    }
+
     def String toString() {
         return "initialization script"
     }

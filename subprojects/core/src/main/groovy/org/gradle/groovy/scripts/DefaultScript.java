@@ -32,6 +32,7 @@ import org.gradle.api.internal.file.collections.DirectoryFileTreeFactory;
 import org.gradle.api.internal.initialization.ClassLoaderScope;
 import org.gradle.api.internal.initialization.ScriptHandlerFactory;
 import org.gradle.api.internal.plugins.DefaultObjectConfigurationAction;
+import org.gradle.api.internal.plugins.dsl.PluginRepositoryHandler;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.logging.LoggingManager;
@@ -179,6 +180,12 @@ public abstract class DefaultScript extends BasicScript {
     @Override
     public ResourceHandler getResources() {
         return fileOperations.getResources();
+    }
+
+    // TODO(pepper): Add this method to the Script interface.
+    // @Override
+    public PluginRepositoryHandler getPluginRepositoryHandler() {
+        return __scriptServices.get(PluginRepositoryHandler.class);
     }
 
     @Override

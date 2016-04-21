@@ -34,5 +34,10 @@ public class SettingScriptTarget extends DefaultScriptTarget {
     public Class<? extends BasicScript> getScriptClass() {
         return SettingsScript.class;
     }
+
+    @Override
+    public boolean getSupportsPluginRepositoriesBlock() {
+        return true;
+    }
 }
 

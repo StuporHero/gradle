@@ -16,21 +16,17 @@
 
 package org.gradle.internal.service.scopes;
 
-import org.gradle.api.Action;
 import org.gradle.api.internal.DependencyInjectingInstantiator;
 import org.gradle.api.internal.SettingsInternal;
 import org.gradle.api.internal.file.BaseDirFileResolver;
 import org.gradle.api.internal.file.FileResolver;
 import org.gradle.api.internal.plugins.*;
-import org.gradle.api.internal.plugins.dsl.PluginRepositoryHandler;
-import org.gradle.api.internal.plugins.repositories.MavenPluginRepository;
 import org.gradle.api.tasks.util.PatternSet;
 import org.gradle.initialization.DefaultProjectDescriptorRegistry;
 import org.gradle.initialization.ProjectDescriptorRegistry;
 import org.gradle.internal.nativeintegration.filesystem.FileSystem;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.internal.service.DefaultServiceRegistry;
-import org.gradle.internal.service.ServiceRegistration;
 import org.gradle.internal.service.ServiceRegistry;
 
 public class SettingsScopeServices extends DefaultServiceRegistry {
@@ -42,7 +38,7 @@ public class SettingsScopeServices extends DefaultServiceRegistry {
         /*
          * While we don't have the pluginRepositories {} block, allow
          * adding a plugin repository using a system property
-         */
+         *
         register(new Action<ServiceRegistration>() {
             @Override
             public void execute(ServiceRegistration serviceRegistration) {
@@ -61,6 +57,7 @@ public class SettingsScopeServices extends DefaultServiceRegistry {
             }
             }
         });
+        */
     }
 
     protected FileResolver createFileResolver() {

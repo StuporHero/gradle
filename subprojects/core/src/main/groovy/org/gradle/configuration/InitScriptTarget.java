@@ -39,4 +39,9 @@ public class InitScriptTarget extends DefaultScriptTarget {
     public String getClasspathBlockName() {
         return "initscript";
     }
+
+    @Override
+    public boolean getSupportsPluginRepositoriesBlock() {
+        return true;
+    }
 }
