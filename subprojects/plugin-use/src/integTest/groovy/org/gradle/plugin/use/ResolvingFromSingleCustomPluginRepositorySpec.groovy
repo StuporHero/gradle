@@ -17,13 +17,14 @@
 package org.gradle.plugin.use
 
 import org.gradle.integtests.fixtures.AbstractDependencyResolutionTest
+import org.gradle.internal.service.scopes.SettingsScopeServices
 import org.gradle.test.fixtures.file.LeaksFileHandles
 import org.gradle.test.fixtures.plugin.PluginBuilder
 import org.gradle.util.Requires
 import org.gradle.util.TestPrecondition
 
 @LeaksFileHandles
-class CustomRepositoryPluginResolverSpec extends AbstractDependencyResolutionTest {
+class ResolvingFromSingleCustomPluginRepositorySpec extends AbstractDependencyResolutionTest {
 
     private publishTestPlugin() {
         def pluginBuilder = new PluginBuilder(testDirectory.file("plugin"))
@@ -49,11 +50,11 @@ class CustomRepositoryPluginResolverSpec extends AbstractDependencyResolutionTes
     }
 
     def useCustomRepository() {
-        args("-Dorg.gradle.plugin.repoUrl=${mavenRepo.getRootDir()}")
+        args("-D${SettingsScopeServices.PLUGIN_REPOSITORY_SYSTEM_PROPERTY}=${mavenRepo.getRootDir()}")
     }
 
     def useRelativeCustomRepository() {
-        args("-Dorg.gradle.plugin.repoUrl=${mavenRepo.getRootDir().getName()}")
+        args("-D${SettingsScopeServices.PLUGIN_REPOSITORY_SYSTEM_PROPERTY}=${mavenRepo.getRootDir().getName()}")
     }
 
     def "can resolve plugin from absolute maven-repo"() {

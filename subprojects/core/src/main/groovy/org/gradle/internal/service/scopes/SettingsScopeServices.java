@@ -16,6 +16,7 @@
 
 package org.gradle.internal.service.scopes;
 
+import com.google.common.base.Splitter;
 import org.gradle.api.Action;
 import org.gradle.api.internal.DependencyInjectingInstantiator;
 import org.gradle.api.internal.SettingsInternal;
@@ -33,7 +34,11 @@ import org.gradle.internal.service.DefaultServiceRegistry;
 import org.gradle.internal.service.ServiceRegistration;
 import org.gradle.internal.service.ServiceRegistry;
 
+import java.util.List;
+
 public class SettingsScopeServices extends DefaultServiceRegistry {
+    public static final String PLUGIN_REPOSITORY_SYSTEM_PROPERTY = "org.gradle.plugin.repoUrls";
+
     private final SettingsInternal settings;
 
     public SettingsScopeServices(ServiceRegistry parent, final SettingsInternal settings) {
@@ -46,19 +51,21 @@ public class SettingsScopeServices extends DefaultServiceRegistry {
         register(new Action<ServiceRegistration>() {
             @Override
             public void execute(ServiceRegistration serviceRegistration) {
-            final String customRepoUrl = System.getProperty("org.gradle.plugin.repoUrl");
-            if (customRepoUrl != null) {
-                PluginRepositoryHandler pluginRepositoryHandler = get(PluginRepositoryHandler.class);
-                FileResolver fileResolver = get(FileResolver.class);
-                final String normalizedUrl = fileResolver.resolveUri(customRepoUrl).toString();
-                pluginRepositoryHandler.maven(new Action<MavenPluginRepository>() {
-                    @Override
-                    public void execute(MavenPluginRepository mavenPluginRepository) {
-                        mavenPluginRepository.setName("maven");
-                        mavenPluginRepository.setUrl(normalizedUrl);
+                final String repoUrlProperty = System.getProperty(PLUGIN_REPOSITORY_SYSTEM_PROPERTY);
+                if (repoUrlProperty != null) {
+                    PluginRepositoryHandler pluginRepositoryHandler = get(PluginRepositoryHandler.class);
+                    FileResolver fileResolver = get(FileResolver.class);
+                    List<String> repoUrls = Splitter.on(',').splitToList(repoUrlProperty);
+                    for (String repoUrl : repoUrls) {
+                        final String normalizedUrl = fileResolver.resolveUri(repoUrl).toString();
+                        pluginRepositoryHandler.maven(new Action<MavenPluginRepository>() {
+                            @Override
+                            public void execute(MavenPluginRepository mavenPluginRepository) {
+                                mavenPluginRepository.setUrl(normalizedUrl);
+                            }
+                        });
                     }
-                });
-            }
+                }
             }
         });
     }
